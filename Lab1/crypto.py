@@ -45,6 +45,15 @@ def encrypt_vigenere(plaintext, keyword):
 
     Add more implementation details here.
     """
+
+    ecrypted_text = ""
+    for i, letter in enumerate(plaintext):
+        j = i % len(keyword)
+        new_letter = chr(( (ord(letter) - ord('A')) + (ord(keyword[j]) - ord('A')) ) % 26 + ord('A'))
+        ecrypted_text += new_letter
+
+    return ecrypted_text
+
     raise NotImplementedError  # Your implementation here
 
 
@@ -53,6 +62,15 @@ def decrypt_vigenere(ciphertext, keyword):
 
     Add more implementation details here.
     """
+
+    decrypted_text = ""
+    for i, letter in enumerate(ciphertext):
+        j = i % len(keyword)
+        new_letter = chr( ((ord(letter) - ord('A')) - (ord(keyword[j]) - ord('A')) + 26 ) % 26 + ord('A'))
+        decrypted_text += new_letter
+
+    return decrypted_text
+
     raise NotImplementedError  # Your implementation here
 
 
