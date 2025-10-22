@@ -73,6 +73,80 @@ def decrypt_vigenere(ciphertext, keyword):
 
     raise NotImplementedError  # Your implementation here
 
+def encrypt_scytale(plaintext, n):
+    return ''.join(plaintext[i::n] for i in range(n))
+
+def decrypt_scytale(ciphertext, n):
+    m = len(ciphertext)
+    cols = (m + n - 1) // n
+
+    rows = []
+    start = 0
+    for i in range(n):
+        end = start + cols
+        if end > m:
+            end = m
+        rows.append(ciphertext[start:end])
+        start = end
+
+    return ''.join(row[i] for i in range(cols) for row in rows if i < len(row))
+
+
+def encrypt_rail_fence(plaintext, num_rails):
+    """
+    There will be a fance 2D array, in which every row would be a rail.
+    Every char will be taken one by one, and with the help of a direction
+    variable will be put in the correct rail.
+    """
+    fence = [[] for _ in range(num_rails)]
+
+    rail = 0
+    direction = 1
+
+    for char in plaintext:
+        fence[rail].append(char)
+        rail += direction
+        if rail == 0 or rail == num_rails - 1:
+            direction *= -1
+
+    return ''.join(''.join(row) for row in fence)
+
+
+def decrypt_railfence(ciphertext, num_rails):
+    """
+    A fence(2D matrix) will be created to which a zig-zag pattern with the help of the '*'
+    caracter will be added. Afterwards the fence will be traversed normally, and whenever
+    a '*' is found, it will be replaced with the next caracter from the ciphertext. The last
+    step is, to traverse the fence once more in the zig-zag pattern.
+    """
+    fence = [['' for _ in ciphertext] for _ in range(num_rails)]
+
+    rail = 0
+    direction = 1
+    for i in range(len(ciphertext)):
+        fence[rail][i] = '*'
+        rail += direction
+        if rail == 0 or rail == num_rails - 1:
+            direction *= -1
+
+    index = 0
+    for r in range(num_rails):
+        for c in range(len(ciphertext)):
+            if fence[r][c] == '*':
+                fence[r][c] = ciphertext[index]
+                index += 1
+
+    result = []
+    rail, direction = 0, 1
+    for i in range(len(ciphertext)):
+        result.append(fence[rail][i])
+        rail += direction
+        if rail == 0 or rail == num_rails - 1:
+            direction *= -1
+
+    return ''.join(result)
+
+
 
 # Merkle-Hellman Knapsack Cryptosystem
 
