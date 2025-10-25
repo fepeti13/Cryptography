@@ -42,36 +42,100 @@ def decrypt_caesar(ciphertext):
 
 def encrypt_vigenere(plaintext, keyword):
     """Encrypt plaintext using a Vigenere cipher with a keyword.
-
+    Only encrypts letters (A-Z, a-z). Preserves spaces, punctuation, and case.
+    So later we can use it to brake the encription.:))
     Add more implementation details here.
     """
 
-    ecrypted_text = ""
-    for i, letter in enumerate(plaintext):
-        j = i % len(keyword)
-        new_letter = chr(( (ord(letter) - ord('A')) + (ord(keyword[j]) - ord('A')) ) % 26 + ord('A'))
-        ecrypted_text += new_letter
+    encrypted_text = ""
+    key_index = 0
+    for letter in plaintext:
+        if letter.isalpha():
+            j = key_index % len(keyword)
+            new_letter = chr(( (ord(letter) - ord('A')) + (ord(keyword[j]) - ord('A')) ) % 26 + ord('A'))
+            encrypted_text += new_letter
+            key_index += 1
+        else:
+            encrypted_text += letter
 
-    return ecrypted_text
+    return encrypted_text
 
     raise NotImplementedError  # Your implementation here
 
 
-def decrypt_vigenere(ciphertext, keyword):
+def decrypt_vigenere_with_key(ciphertext, keyword):
     """Decrypt ciphertext using a Vigenere cipher with a keyword.
 
     Add more implementation details here.
     """
 
     decrypted_text = ""
-    for i, letter in enumerate(ciphertext):
-        j = i % len(keyword)
-        new_letter = chr( ((ord(letter) - ord('A')) - (ord(keyword[j]) - ord('A')) + 26 ) % 26 + ord('A'))
-        decrypted_text += new_letter
+    key_index = 0
+    
+    for letter in ciphertext:
+        if letter.isalpha():
+            j = key_index % len(keyword)
+            new_letter = chr(((ord(letter) - ord('A')) - (ord(keyword[j]) - ord('A')) + 26) % 26 + ord('A'))
+            decrypted_text += new_letter
+            key_index += 1
+        else:
+            decrypted_text += letter
 
     return decrypted_text
 
-    raise NotImplementedError  # Your implementation here
+def get_words():
+    path = "/usr/share/dict/words"
+    with open(path, 'r') as f:
+        words = f.read()
+    
+    return words
+
+def score_text(text, word_set):
+    """Score how English-y a text is based on valid dictionary words."""
+    words_in_text = text.split()
+    
+    valid_word_count = 0
+    for word in words_in_text:
+        clean_word = ''.join(c for c in word if c.isalpha())
+        if clean_word and clean_word in word_set:
+            valid_word_count += 1
+    
+    total_words = len(words_in_text)
+    if total_words == 0:
+        return 0
+    return valid_word_count / total_words
+
+def decrypt_vigenere(ciphertext, possible_keys):
+    """Decrypt ciphertext using a Vigenere cipher without knowing the exact keyword.
+    Tries all possible keys and returns the best match based on English dictionary words.
+    """
+    word_set = get_words()
+    
+    keys_list = possible_keys.strip().split('\n')
+    
+    best_score = 0
+    best_key = None
+    best_text = None
+
+    for key in keys_list:
+        key = key.strip().upper()
+        if not key:
+            continue
+            
+        decrypted_text = decrypt_vigenere_with_key(ciphertext, key)
+        score = score_text(decrypted_text, word_set)
+        
+        if score > best_score:
+            best_score = score
+            best_key = key
+            best_text = decrypted_text
+    
+    return {
+        "key": best_key,
+        "text": best_text,
+        "score": best_score
+    }
+
 
 def encrypt_scytale(plaintext, n):
     return ''.join(plaintext[i::n] for i in range(n))
