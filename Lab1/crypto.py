@@ -37,6 +37,33 @@ def decrypt_caesar(ciphertext):
 
     return decrypted_text
 
+def encrypt_caesar_binary(data, shift):
+    """Encrypt binary data using Caesar cipher.
+    
+    Args:
+        data: bytes object
+        shift: integer shift amount (0-255)
+    
+    Returns:
+        bytes object
+    """
+    encrypted = bytearray()
+    
+    for byte in data:
+        new_byte = (byte + shift) % 256
+        encrypted.append(new_byte)
+    
+    return bytes(encrypted)
+
+def decrypt_caesar_binary(data, shift):
+    """Decrypt binary data using Caesar cipher."""
+    decrypted = bytearray()
+    
+    for byte in data:
+        new_byte = (byte - shift) % 256
+        decrypted.append(new_byte)
+    
+    return bytes(decrypted)
 
 # Vigenere Cipher
 
@@ -59,8 +86,6 @@ def encrypt_vigenere(plaintext, keyword):
             encrypted_text += letter
 
     return encrypted_text
-
-    raise NotImplementedError  # Your implementation here
 
 
 def decrypt_vigenere_with_key(ciphertext, keyword):
@@ -86,7 +111,7 @@ def decrypt_vigenere_with_key(ciphertext, keyword):
 def get_words():
     path = "/usr/share/dict/words"
     with open(path, 'r') as f:
-        words = f.read()
+        words = set(word.strip().upper() for word in f)
     
     return words
 
@@ -136,6 +161,47 @@ def decrypt_vigenere(ciphertext, possible_keys):
         "score": best_score
     }
 
+def encrypt_vigenere_binary(data, key):
+    """Encrypt binary data using Vigenere cipher.
+    
+    Args:
+        data: bytes object
+        key: string or bytes (will be converted to bytes)
+    
+    Returns:
+        bytes object
+    """
+    if isinstance(key, str):
+        key = key.encode('utf-8')
+    
+    encrypted = bytearray()
+    
+    for i, byte in enumerate(data):
+        key_byte = key[i % len(key)]
+
+        new_byte = (byte + key_byte) % 256
+        
+        encrypted.append(new_byte)
+    
+    return bytes(encrypted)
+
+def decrypt_vigenere_binary(data, key):
+    """Decrypt binary data using Vigenere cipher."""
+    if isinstance(key, str):
+        key = key.encode('utf-8')
+    
+    decrypted = bytearray()
+    
+    for i, byte in enumerate(data):
+        key_byte = key[i % len(key)]
+        
+        new_byte = (byte - key_byte) % 256
+        
+        decrypted.append(new_byte)
+    
+    return bytes(decrypted)
+
+
 
 def encrypt_scytale(plaintext, n):
     return ''.join(plaintext[i::n] for i in range(n))
@@ -143,18 +209,28 @@ def encrypt_scytale(plaintext, n):
 def decrypt_scytale(ciphertext, n):
     m = len(ciphertext)
     cols = (m + n - 1) // n
-
-    rows = []
-    start = 0
+    
+    full_rows = m % n
+    if full_rows == 0:
+        full_rows = n
+    
+    grid = []
+    index = 0
     for i in range(n):
-        end = start + cols
-        if end > m:
-            end = m
-        rows.append(ciphertext[start:end])
-        start = end
-
-    return ''.join(row[i] for i in range(cols) for row in rows if i < len(row))
-
+        if i < full_rows:
+            grid.append(ciphertext[index:index + cols])
+            index += cols
+        else:
+            grid.append(ciphertext[index:index + cols - 1])
+            index += cols - 1
+    
+    result = []
+    for col in range(cols):
+        for row in range(n):
+            if col < len(grid[row]):
+                result.append(grid[row][col])
+    
+    return ''.join(result)
 
 def encrypt_rail_fence(plaintext, num_rails):
     """
@@ -162,6 +238,9 @@ def encrypt_rail_fence(plaintext, num_rails):
     Every char will be taken one by one, and with the help of a direction
     variable will be put in the correct rail.
     """
+    if num_rails == 1:
+        return plaintext
+
     fence = [[] for _ in range(num_rails)]
 
     rail = 0
@@ -176,13 +255,16 @@ def encrypt_rail_fence(plaintext, num_rails):
     return ''.join(''.join(row) for row in fence)
 
 
-def decrypt_railfence(ciphertext, num_rails):
+def decrypt_rail_fence(ciphertext, num_rails):
     """
     A fence(2D matrix) will be created to which a zig-zag pattern with the help of the '*'
     caracter will be added. Afterwards the fence will be traversed normally, and whenever
     a '*' is found, it will be replaced with the next caracter from the ciphertext. The last
     step is, to traverse the fence once more in the zig-zag pattern.
     """
+    if num_rails == 1:
+        return ciphertext
+
     fence = [['' for _ in ciphertext] for _ in range(num_rails)]
 
     rail = 0

@@ -5,15 +5,19 @@ File: crypto-console.py
 Implements a console menu to interact with the cryptography functions exported
 by the crypto module.
 
-If you are a student, you shouldn't need to change anything in this file.
+Enhanced version with binary encryption support and rail fence cipher.
 """
 import random
 
 from crypto import (encrypt_caesar, decrypt_caesar,
-                    encrypt_vigenere, decrypt_vigenere,
+                    encrypt_caesar_binary, decrypt_caesar_binary,
+                    encrypt_vigenere, decrypt_vigenere_with_key,
+                    encrypt_vigenere_binary, decrypt_vigenere_binary,
                     encrypt_scytale, decrypt_scytale,
+                    encrypt_rail_fence, decrypt_rail_fence,
                     generate_private_key, create_public_key,
-                    encrypt_mh, decrypt_mh)
+                    encrypt_mh, decrypt_mh,
+                    decrypt_vigenere)
 
 
 #############################
@@ -22,7 +26,15 @@ from crypto import (encrypt_caesar, decrypt_caesar,
 
 def get_tool():
     print("* Tool *")
-    return _get_selection("(C)aesar, (V)igenere, (M)erkle-Hellman or (S)cytale? ", "CVMS")
+    print("Available ciphers:")
+    print("  (C)aesar - Simple shift cipher")
+    print("  (V)igenere - Keyword-based cipher")
+    print("  (S)cytale - Transposition cipher")
+    print("  (R)ail Fence - Zigzag transposition cipher")
+    print("  (M)erkle-Hellman - Public key cryptosystem")
+    print("  (B)inary Encryption - Encrypt files (images, audio, etc.)")
+    print("  (I)ntelligent Codebreaker - Break Vigenere without knowing the key")
+    return _get_selection("Choose a cipher: ", "CVRSMBИ")
 
 
 def get_action():
@@ -107,6 +119,7 @@ def clean_vigenere(text):
 def clean_scytale(text):
     return text.upper()
 
+
 def run_caesar():
     action = get_action()
     encrypting = action == 'E'
@@ -130,9 +143,10 @@ def run_vigenere():
 
     print("{}crypting {} using Vigenere cipher and keyword {}...".format('En' if encrypting else 'De', data, keyword))
 
-    output = (encrypt_vigenere if encrypting else decrypt_vigenere)(data, keyword)
+    output = (encrypt_vigenere if encrypting else decrypt_vigenere_with_key)(data, keyword)
 
     set_output(output)
+
 
 def run_scytale():
     action = get_action()
@@ -140,13 +154,124 @@ def run_scytale():
     data = clean_scytale(get_input(binary=False))
 
     print("* Transform *")
-    key = int(input("Key: "))
+    key = int(input("Key (number of rails): "))
 
     print("{}crypting {} using Scytale cipher and key {}...".format('En' if encrypting else 'De', data, key))
 
     output = (encrypt_scytale if encrypting else decrypt_scytale)(data, key)
 
     set_output(output)
+
+
+def run_rail_fence():
+    action = get_action()
+    encrypting = action == 'E'
+    data = clean_scytale(get_input(binary=False))
+
+    print("* Transform *")
+    num_rails = int(input("Number of rails: "))
+
+    print("{}crypting {} using Rail Fence cipher with {} rails...".format('En' if encrypting else 'De', data, num_rails))
+
+    output = (encrypt_rail_fence if encrypting else decrypt_rail_fence)(data, num_rails)
+
+    set_output(output)
+
+
+def run_binary_encryption():
+    """Encrypt/decrypt binary files (images, audio, etc.)"""
+    action = get_action()
+    encrypting = action == 'E'
+    
+    print("* Binary Encryption Options *")
+    cipher_choice = _get_selection("(C)aesar or (V)igenere cipher for binary? ", "CV")
+    
+    print("* Input File *")
+    input_filename = get_filename()
+    
+    with open(input_filename, 'rb') as f:
+        data = f.read()
+    
+    print("* Transform *")
+    
+    if cipher_choice == 'C':
+        # Caesar binary
+        shift = int(input("Shift amount (0-255): "))
+        print("{}crypting {} using binary Caesar cipher with shift {}...".format(
+            'En' if encrypting else 'De', input_filename, shift))
+        output = (encrypt_caesar_binary if encrypting else decrypt_caesar_binary)(data, shift)
+    else:
+        # Vigenere binary
+        keyword = input("Keyword: ").strip()
+        while not keyword:
+            keyword = input("Keyword: ").strip()
+        print("{}crypting {} using binary Vigenere cipher with keyword {}...".format(
+            'En' if encrypting else 'De', input_filename, keyword))
+        output = (encrypt_vigenere_binary if encrypting else decrypt_vigenere_binary)(data, keyword)
+    
+    # Output
+    print("* Output File *")
+    output_filename = get_filename()
+    with open(output_filename, 'wb') as f:
+        f.write(output)
+    print("Successfully wrote encrypted data to {}".format(output_filename))
+
+
+def run_intelligent_codebreaker():
+    """Break a Vigenere cipher without knowing the key"""
+    print("* Intelligent Vigenere Codebreaker *")
+    print("This will attempt to decrypt a Vigenere cipher by trying all possible keys")
+    print("from the dictionary and finding the most English-like result.")
+    
+    print("\n* Ciphertext Input *")
+    ciphertext_choice = _get_selection("(F)ile or (S)tring? ", "FS")
+    
+    if ciphertext_choice == 'S':
+        ciphertext = input("Enter ciphertext: ").strip().upper()
+        while not ciphertext:
+            ciphertext = input("Enter ciphertext: ").strip().upper()
+    else:
+        filename = get_filename()
+        with open(filename, 'r') as f:
+            ciphertext = f.read().strip()
+    
+    print("\n* Possible Keys *")
+    print("Loading dictionary words as possible keys...")
+    
+    # Read possible keys from dictionary
+    with open('/usr/share/dict/words', 'r') as f:
+        possible_keys = f.read()
+    
+    # Filter keys (optional - you can customize this)
+    filter_keys = get_yes_or_no("Filter keys to common word lengths (3-10 chars)?")
+    if filter_keys:
+        keys_list = [key.strip() for key in possible_keys.split('\n') 
+                     if 3 <= len(key.strip()) <= 10 and key.strip().isalpha()]
+        possible_keys = '\n'.join(keys_list)
+        print("Filtered to {} possible keys".format(len(keys_list)))
+    
+    print("\n* Breaking the cipher... *")
+    print("This may take a while depending on the number of possible keys...")
+    print("(Testing all dictionary words as potential keys)\n")
+    
+    result = decrypt_vigenere(ciphertext, possible_keys)
+    
+    print("\n" + "="*50)
+    print("* RESULTS *")
+    print("="*50)
+    print("Best matching key: {}".format(result['key']))
+    print("Confidence score: {:.2%}".format(result['score']))
+    print("\nDecrypted text:")
+    print("-"*50)
+    print(result['text'])
+    print("-"*50)
+    
+    # Option to save
+    if get_yes_or_no("\nSave decrypted text to file?"):
+        filename = get_filename()
+        with open(filename, 'w') as f:
+            f.write(result['text'])
+        print("Saved to {}".format(filename))
 
 
 def run_merkle_hellman():
@@ -186,26 +311,39 @@ def run_suite():
     Asks the user for input text from a string or file, whether to encrypt
     or decrypt, what tool to use, and where to show the output.
     """
-    print('-' * 34)
+    print('-' * 50)
     tool = get_tool()
     # This isn't the cleanest way to implement functional control flow,
     # but I thought it was too cool to not sneak in here!
     commands = {
-        'C': run_caesar,         # Caesar Cipher
-        'V': run_vigenere,       # Vigenere Cipher
-        'M': run_merkle_hellman, # Merkle-Hellman Knapsack Cryptosystem
-        'S': run_scytale         # Scytale
+        'C': run_caesar,                    # Caesar Cipher
+        'V': run_vigenere,                  # Vigenere Cipher
+        'M': run_merkle_hellman,            # Merkle-Hellman Knapsack Cryptosystem
+        'S': run_scytale,                   # Scytale
+        'R': run_rail_fence,                # Rail Fence Cipher
+        'B': run_binary_encryption,         # Binary Encryption (files)
+        'I': run_intelligent_codebreaker    # Intelligent Vigenere Codebreaker
     }
     commands[tool]()
 
 
 def main():
-    """Harness for CS41 Assignment 1"""
-    print("Welcome to the Cryptography Suite!")
+    """Harness for CS41 Assignment 1 - Enhanced Edition"""
+    print("="*50)
+    print("Welcome to the Enhanced Cryptography Suite!")
+    print("="*50)
+    print("\nFeatures:")
+    print("  • Classic text ciphers (Caesar, Vigenere, Scytale)")
+    print("  • Rail Fence cipher")
+    print("  • Binary file encryption (images, audio, etc.)")
+    print("  • Intelligent codebreaker for Vigenere cipher")
+    print("  • Merkle-Hellman public key cryptosystem")
+    print()
+    
     run_suite()
-    while get_yes_or_no("Again?"):
+    while get_yes_or_no("Run another encryption/decryption?"):
         run_suite()
-    print("Goodbye!")
+    print("\nGoodbye! Stay secure!")
 
 
 if __name__ == '__main__':
