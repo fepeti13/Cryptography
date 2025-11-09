@@ -19,7 +19,8 @@ def encryption_machine(original_text, key, size, encryption_function, method, in
     elif method == "CTR":
         return CTR_encrypt(original_text, key, size, encryption_function, nonce)
 
-    
+### ECB 
+
 def ECB_encrypt(original_text, key, encryption_function, padding_mode):
     length = len(original_text)
     start_iterator = 0
@@ -35,6 +36,22 @@ def ECB_encrypt(original_text, key, encryption_function, padding_mode):
         encrypted_text += encryption_function(padded_block, key)
     
     return encrypted_text
+
+def ECB_decrypt(encrypted_text, key, decryption_function, padding_mode):
+    length = len(encrypted_text)
+    start_iterator = 0
+    end_iterator = BLOCK_SIZE
+    decrypted_text = bytearray()
+    
+    while (end_iterator <= length):
+        decrypted_text += decryption_function(encrypted_text[start_iterator: end_iterator], key)
+        start_iterator += BLOCK_SIZE
+        end_iterator += BLOCK_SIZE
+    
+    return unpadding_function(decrypted_text, padding_mode)
+
+
+### CBC
 
 def CBC_encrypt(original_text, key, encryption_function, initial_vector, padding_mode):
     length = len(original_text)
@@ -61,6 +78,27 @@ def CBC_encrypt(original_text, key, encryption_function, initial_vector, padding
     
     return encrypted_text
 
+def CBC_decrypt(encrypted_text, key, decryption_function, initial_vector, padding_mode):
+    length = len(encrypted_text)
+    start_iterator = 0
+    end_iterator = BLOCK_SIZE
+    decrypted_text = bytearray()
+
+    previous_block = initial_vector
+
+    while (end_iterator <= length):
+        current_encrypted_block = encrypted_text[start_iterator:end_iterator]
+        decrypted_block = decryption_function(current_encrypted_block, key)
+        xor_output = bytearray([x ^ y for x, y in zip(previous_block, decrypted_block)])
+        decrypted_text += xor_output
+        previous_block = current_encrypted_block
+        start_iterator += BLOCK_SIZE
+        end_iterator += BLOCK_SIZE
+    
+    return unpadding_function(decrypted_text, padding_mode)
+
+### CFB
+
 def CFB_encrypt(original_text, key, encryption_function, initial_vector):
     length = len(original_text)
     start_iterator = 0
@@ -84,6 +122,32 @@ def CFB_encrypt(original_text, key, encryption_function, initial_vector):
         encrypted_text += xor_output
         
     return encrypted_text
+
+def CFB_decrypt(encrypted_text, key, encryption_function, initial_vector):
+    length = len(encrypted_text)
+    start_iterator = 0
+    end_iterator = BLOCK_SIZE
+    decrypted_text = bytearray()
+
+    previous_block = initial_vector
+
+    while (end_iterator <= length):
+        encryption_output = encryption_function(previous_block, key)
+        xor_output = bytearray([x ^ y for x, y in zip(encryption_output, encrypted_text[start_iterator:end_iterator])])
+        decrypted_text += xor_output
+        previous_block = encrypted_text[start_iterator:end_iterator]
+        start_iterator += BLOCK_SIZE
+        end_iterator += BLOCK_SIZE
+
+    if start_iterator < length:
+        last_block_length = length - start_iterator
+        encryption_output = encryption_function(previous_block, key)
+        xor_output = bytearray([x ^ y for x, y in zip(encrypted_text[start_iterator:], encryption_output[:last_block_length])])
+        decrypted_text += xor_output
+        
+    return decrypted_text
+
+### OFB
 
 def OFB_encrypt(original_text, key, encryption_function, initial_vector):
     length = len(original_text)
@@ -109,6 +173,8 @@ def OFB_encrypt(original_text, key, encryption_function, initial_vector):
         
     return encrypted_text
 
+### CTR
+
 def CTR_encrypt(original_text, key, encryption_function, nonce):    #Nonce = Number used ONCE (very similar to IV but it is 8 bytes and it can be predictable)
     length = len(original_text)
     start_iterator = 0
@@ -133,6 +199,8 @@ def CTR_encrypt(original_text, key, encryption_function, nonce):    #Nonce = Num
         encrypted_text += xor_output
 
     return encrypted_text
+
+### padding
 
 def padding_function(text, padding_mode):
     if padding_mode == "zero-padding":
@@ -160,8 +228,8 @@ def Schneier_Ferguson_padding(text):
     text.extend(bytes([padding_length] * padding_length))
     return text
 
-def parse_json(path, filename):
-    pass
+
+### unpadding
 
 def unpadding_function(text, padding_mode):
     if padding_mode == "zero-padding":
@@ -189,6 +257,11 @@ def Schneier_Ferguson_unpadding(text):
     padding_length = text[-1]
     return text[:-padding_length]
 
+
+### starter point
+
+def parse_json(path, filename):
+    pass
 
 path = os.rootdir()
 filename = "config.json"
