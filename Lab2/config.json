@@ -1,0 +1,10 @@
+{
+    "input_file": ,
+    "output_file":,
+    "mode": "encrypt",
+    "method": "ECB",
+    "key":,
+    "encryption_function": "DES",
+    "padding_mode":,
+    "initial_method":
+}
