@@ -61,7 +61,7 @@ def CBC(original_text, key, encryption_function, initial_vector, padding_mode):
     
     return encrypted_text
 
-def CFB(original_text, key, encryption_function, initial_vector, padding_mode):
+def CFB(original_text, key, encryption_function, initial_vector):
     length = len(original_text)
     start_iterator = 0
     end_iterator = BLOCK_SIZE
@@ -77,11 +77,37 @@ def CFB(original_text, key, encryption_function, initial_vector, padding_mode):
         start_iterator += BLOCK_SIZE
         end_iterator += BLOCK_SIZE
 
-    
+    if start_iterator < length:
+        last_block_length = length - start_iterator
+        encryption_output = encryption_function(previous_block, key)
+        xor_output = bytearray( [x ^ y for x, y in zip(original_text[start_iterator:], encryption_output[:last_block_length])])
+        encrypted_text += xor_output
+        
     return encrypted_text
 
-def OFB(size, encryption_function, initial_vector, padding_mode):
-    pass
+def OFB(original_text, key, encryption_function, initial_vector):
+    length = len(original_text)
+    start_iterator = 0
+    end_iterator = BLOCK_SIZE
+    encrypted_text = bytearray()
+
+    previous_block = initial_vector
+
+    while (end_iterator <= length):
+        encryption_output = encryption_function(previous_block, key)
+        xor_output = bytearray( [ x ^ y for x, y in zip(encryption_output, original_text[start_iterator:end_iterator]) ] )
+        encrypted_text += xor_output
+        previous_block = encryption_output
+        start_iterator += BLOCK_SIZE
+        end_iterator += BLOCK_SIZE
+
+    if start_iterator < length:
+        last_block_length = length - start_iterator
+        encryption_output = encryption_function(previous_block, key)
+        xor_output = bytearray( [x ^ y for x, y in zip(original_text[start_iterator:], encryption_output[:last_block_length])])
+        encrypted_text += xor_output
+        
+    return encrypted_text
 
 def CTR(size, encryption_function, padding_mode):
     pass
