@@ -1,8 +1,8 @@
 {
     "block_size": 128,
-    "input_file": "plaintext.txt",
-    "output_file": "ciphertext.bin",
-    "mode": "encrypt",
+    "input_file": "ciphertext.bin",
+    "output_file": "decrypted.txt",
+    "mode": "decrypt",
     "method": "CBC",
     "key": "0123456789ABCDEF",
     "encryption_function": "AES",
