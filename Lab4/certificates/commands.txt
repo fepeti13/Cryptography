@@ -1,0 +1,7 @@
+openssl genrsa -out fake-bnr-key.pem 2048
+
+openssl req -new -x509 -key fake-bnr-key.pem -out fake-bnr-cert.pem -days 365 \
+  -subj "/C=RO/ST=Bucuresti/L=Bucuresti/O=Banca Nationala a Romaniei/CN=bnr.ro"
+
+ openssl pkcs12 -export -in fake-bnr-cert.pem -inkey fake-bnr-key.pem \
+   -out fake-bnr.p12 -name fake-bnr -password pass:changeit
