@@ -22,3 +22,8 @@ application {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+task runServer(type: JavaExec) {
+    mainClass = 'edu.bbte.FakeBNRServer'
+    classpath = sourceSets.main.runtimeClasspath
+}
