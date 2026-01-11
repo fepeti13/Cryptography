@@ -53,14 +53,20 @@ public class BNRClient {
             }
 
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            FileWriter fileWriter = new FileWriter("bnr_response.html");
+            BufferedWriter out = new BufferedWriter(fileWriter);
+
             String line;
-            int count = 0;
-            while ((line = in.readLine()) != null && count++ < 15) {
-                System.out.println(line);
+            while ((line = in.readLine()) != null) {
+                out.write(line);
+                out.newLine();
             }
 
+            out.close();
             in.close();
             connection.disconnect();
+
+            System.out.println("HTML saved to bnr_response.html");
 
         } catch (Exception e) {
             e.printStackTrace();
