@@ -163,13 +163,6 @@ def decrypt_vigenere(ciphertext, possible_keys):
 
 def encrypt_vigenere_binary(data, key):
     """Encrypt binary data using Vigenere cipher.
-    
-    Args:
-        data: bytes object
-        key: string or bytes (will be converted to bytes)
-    
-    Returns:
-        bytes object
     """
     if isinstance(key, str):
         key = key.encode('utf-8')

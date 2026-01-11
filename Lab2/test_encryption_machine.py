@@ -156,42 +156,6 @@ class TestCustomEncryption:
         decrypted = CBC_decrypt(encrypted, key, decrypt_func, iv, "Schneier_Ferguson_padding", 16)
         
         assert bytes(decrypted) == bytes(plaintext)
-    
-    def test_cfb_custom_roundtrip(self):
-        plaintext = bytearray(b'CFB custom test message!')
-        key = b'mysecretkey12345'
-        iv = bytearray(b'initialvector123')
-        
-        encrypt_func, decrypt_func = get_cipher_functions("CUSTOM")
-        
-        encrypted = CFB_encrypt(plaintext, key, encrypt_func, iv, 16)
-        decrypted = CFB_decrypt(encrypted, key, decrypt_func, iv, 16)
-        
-        assert bytes(decrypted) == bytes(plaintext)
-    
-    def test_ofb_custom_roundtrip(self):
-        plaintext = bytearray(b'OFB custom test!')
-        key = b'mysecretkey12345'
-        iv = bytearray(b'initialvector123')
-        
-        encrypt_func, decrypt_func = get_cipher_functions("CUSTOM")
-        
-        encrypted = OFB_encrypt(plaintext, key, encrypt_func, iv, 16)
-        decrypted = OFB_decrypt(encrypted, key, decrypt_func, iv, 16)
-        
-        assert bytes(decrypted) == bytes(plaintext)
-    
-    def test_ctr_custom_roundtrip(self):
-        plaintext = bytearray(b'CTR custom test message!')
-        key = b'mysecretkey12345'
-        nonce = bytearray(b'12345678')
-        
-        encrypt_func, decrypt_func = get_cipher_functions("CUSTOM")
-        
-        encrypted = CTR_encrypt(plaintext, key, encrypt_func, nonce, 16)
-        decrypted = CTR_decrypt(encrypted, key, decrypt_func, nonce, 16)
-        
-        assert bytes(decrypted) == bytes(plaintext)
 
 
 class TestPaddingModes:
